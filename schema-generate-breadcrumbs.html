@@ -1,0 +1,58 @@
+{% set friendly_names = {
+	"tv":"TV",
+	'integrated-project-management':'Features'
+} %}
+
+{% set excluded_path_segments = {
+    "topic":True
+} %}
+
+{% macro get_friendly_name(name) %}
+	{% if friendly_names[name] %}
+		{{ friendly_names[name] }}
+	{% else %}
+		{{ name|replace('-',' ')|title }}
+	{% endif %}
+{% endmacro %}
+
+{% set path_segments = request.path|split('/') %}
+
+<script type="application/ld+json">
+
+    [{
+      "@context": "http://schema.org",
+	  "@type": "WebSite",
+	  "url": "{{ company_domain }}",
+	  "name": "{{ site_settings.company_name }}"
+	},
+	{
+	  "@context": "http://schema.org",
+	  "@type": "WebPage",
+	  "url": "{{ content.absolute_url }}",
+	  "name": "{{ content.html_title }}",
+	  
+	  "breadcrumb":{
+	  	"@type": "BreadcrumbList",
+	  	"itemListElement": [
+        	{% set path_segment_count = [] %}
+        	{% set breadcrumb_count = [] %}
+	  		{% for p in path_segments %}
+		  		{% unless excluded_path_segments[p] %}
+			  		{
+			  			"@type": "ListItem",
+			  			"position":"{{breadcrumb_count|length + 1}}",
+			  			"item": {
+			  				"@id":"{{ company_domain }}{% for m in path_segments %}{% if loop.index <= path_segment_count|length + 1 %}/{{ m }}{% endif %}{%endfor%}",
+			  				"name": "{{ get_friendly_name(p) }}"
+			  			}
+			  		} 
+		  		{% unless loop.last %},{%endunless%}
+	            	{% if breadcrumb_count.append(1) %}{%endif%}
+				{% endunless %}
+            	{% if path_segment_count.append(1) %}{%endif%}
+  			{% endfor %}
+	  	]
+	  }
+	}]
+
+</script>
